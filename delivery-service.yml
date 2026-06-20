@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: delivery-service
+
+  cloud:
+    config:
+      enabled: true
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    consumer:
+      group-id: delivery-group
+
+      auto-offset-reset: earliest
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
+
+            use:
+              type:
+                headers: false
+
+            value:
+              default:
+                type: com.delivery.dto.OrderEventConsumer
+
+server:
+  port: 8085
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+    register-with-eureka: true
+
+    fetch-registry: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      deliveryService:
+        sliding-window-size: 5
+
+        minimum-number-of-calls: 5
+
+        failure-rate-threshold: 50
+
+        wait-duration-in-open-state: 30s
+
+        permitted-number-of-calls-in-half-open-state: 2
